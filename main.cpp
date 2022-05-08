@@ -25,32 +25,36 @@ int main()
 	if (!test.SetShaders(shaders))
 		cout << "Error: " << shaders.GetErrorMSG() << endl;
 
-	D3D11VertexBuffer buffer = test.CreateVertexBuffer(1024); // 1024 is big enough for now
-	test.SetVertexBuffer(buffer);
+	test.SetPrimitiveTopology();
 
+	D3D11VertexBuffer vBuffer = test.CreateVertexBuffer(1024); // 1024 is big enough for now
+	D3D11IndexBuffer iBuffer = test.CreateIndexBuffer(1024); // 1024 is big enough for now
+
+	iBuffer.SetData({ 0, 1, 2, 3, 4, 5 });
+	test.SetVertexBuffer(vBuffer);
+	test.SetIndexBuffer(iBuffer);
 	while (win)
 	{
-		vector<VertexPC> vertices;
-
-		const float time = (float)GetTickCount64();
-		vertices.push_back({ -0.25f, 0.1f, 0.2f, {1.0f, 0.0f, 0.0f, time} });
-		vertices.push_back({ 1.0f, 0.0f, 0.2f, {0.0f, 1.0f, 0.0f, time} });
-		vertices.push_back({ -0.25f, -0.1f, 0.2f, {0.0f, 0.0f, 1.0f, time} });
-
-		vertices.push_back({ -0.5f, 1.0f, 0.5f, {1.0f, 0.0f, 0.0f, time} });
-		vertices.push_back({ 1.0f, 0.0f, 0.5f, {0.0f, 1.0f, 0.0f, time} });
-		vertices.push_back({ -0.5f, -1.0f, 0.5f, {0.0f, 0.0f, 1.0f, time} });
-
-		buffer.SetData(vertices);
-
 		if (win.MessageAvailable())
 		{
 			win.getMessage();
 			win.sendMessage();
 		}
-		test.Clear();
-		test.Render(vertices.size());
 
+		const float time = (float)GetTickCount64();
+		vBuffer.SetData({
+			{{ -0.25f, 0.1f, 0.2f }, { 1.0f, 0.0f, 0.0f, time }},
+			{{ 1.0f, 0.0f, 0.2f}, {0.0f, 1.0f, 0.0f, time}},
+			{{ -0.25f, -0.1f, 0.2f }, { 0.0f, 0.0f, 1.0f, time }},
+			{{ -0.5f, 1.0f, 0.5f }, { 1.0f, 0.0f, 0.0f, time }},
+			{{ 1.0f, 0.0f, 0.5f }, { 0.0f, 1.0f, 0.0f, time }},
+			{{ -0.5f, -1.0f, 0.5f }, { 0.0f, 0.0f, 1.0f, time }}
+			});
+
+		ColorRGBA color = { abs(sin(time / 1000.f)), abs(sin(time / 2000.f)), abs(sin(time / 500.f)) };
+		test.BeginDraw(color);
+		test.IDraw(iBuffer.GetElementCount());
+		test.EndDraw();
 		// Sleep(1);
 	}
 }

@@ -3,6 +3,7 @@
 #include "D3D11Common.h"
 #include "D3D11VertexBuffer.h"
 #include "D3D11Shaders.h"
+#include "D3D11IndexBuffer.h"
 
 class D3D11Core
 {
@@ -128,8 +129,19 @@ public:
 	{
 		ID3D11Buffer* vertexBuffer = NULL;
 		D3D11_BUFFER_DESC descriptor{ bufferSizeBytes, usage, D3D11_BIND_FLAG::D3D11_BIND_VERTEX_BUFFER, accessFlagsCPU, 0, 0 };
-		HRESULT res = Device->CreateBuffer(&descriptor, NULL, &vertexBuffer);
+		Device->CreateBuffer(&descriptor, NULL, &vertexBuffer);
 		return D3D11VertexBuffer(vertexBuffer, DeviceContext);
+	}
+
+	const D3D11IndexBuffer CreateIndexBuffer(
+		const UINT bufferSizeBytes,
+		const D3D11_USAGE usage = D3D11_USAGE::D3D11_USAGE_DYNAMIC,
+		const UINT accessFlagsCPU = D3D11_CPU_ACCESS_FLAG::D3D11_CPU_ACCESS_WRITE)
+	{
+		ID3D11Buffer* indexBuffer = NULL;
+		D3D11_BUFFER_DESC descriptor{ bufferSizeBytes, usage, D3D11_BIND_FLAG::D3D11_BIND_INDEX_BUFFER, accessFlagsCPU, 0, 0 };
+		Device->CreateBuffer(&descriptor, NULL, &indexBuffer);
+		return D3D11IndexBuffer(indexBuffer, DeviceContext);
 	}
 
 	const D3D11Shaders CreateShaders(LPCWSTR fileVShader, LPCWSTR filePShader, LPCSTR entryVpoint, LPCSTR entryPpoint, vector<D3D11_INPUT_ELEMENT_DESC> descriptors =
@@ -207,16 +219,37 @@ public:
 		return true;
 	}
 
-	void Clear(ColorRGBA color = { 0.0f, 0.0f, 0.0f, 0.0f })
+	bool SetIndexBuffer(const D3D11IndexBuffer& buffer)
+	{
+		if (!buffer.Valid())
+			return false;
+		DeviceContext->IASetIndexBuffer(buffer.GetBuffer(), DXGI_FORMAT::DXGI_FORMAT_R32_UINT, 0);
+		return true;
+	}
+
+	void BeginDraw(ColorRGBA color = { 0.0f, 0.0f, 0.0f, 0.0f })
 	{
 		DeviceContext->ClearRenderTargetView(RenderTargetView, color.rgba);
 		DeviceContext->ClearDepthStencilView(DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 	}
 
-	void Render(const UINT vCount, const UINT offset = 0, const D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
+	void SetPrimitiveTopology(const D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
 	{
 		DeviceContext->IASetPrimitiveTopology(topology);
-		DeviceContext->Draw(vCount, offset);
+	}
+
+	void VDraw(const UINT count)
+	{
+		DeviceContext->Draw(count, 0);
+	}
+
+	void IDraw(const UINT count)
+	{
+		DeviceContext->DrawIndexed(count, 0, 0);
+	}
+
+	void EndDraw()
+	{
 		SwapChain->Present(0, 0);
 	}
 
