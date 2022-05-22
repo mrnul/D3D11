@@ -27,9 +27,9 @@ int main()
 
 	test.SetPrimitiveTopology();
 
-	D3D11VertexBuffer vBuffer = test.CreateVertexBuffer(1024); // 1024 is big enough for now
-	D3D11IndexBuffer iBuffer = test.CreateIndexBuffer(1024); // 1024 is big enough for now
-	D3D11ConstantBuffer cBuffer = test.CreateConstantBuffer(sizeof(ConstantBufferData));
+	D3D11Buffer<VertexPC> vBuffer = test.CreateVertexBuffer<VertexPC>(6); // 1024 is big enough for now
+	D3D11Buffer<int> iBuffer = test.CreateIndexBuffer<int>(6); // 1024 is big enough for now
+	D3D11Buffer<ConstantBufferData> cBuffer = test.CreateConstantBuffer<ConstantBufferData>(1);
 
 	cBuffer.SetData({ {1.0f, 1.0f, 1.0f, 1.0f} });
 	iBuffer.SetData({ 0, 1, 2, 3, 4, 5 });

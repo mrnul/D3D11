@@ -5,6 +5,9 @@
 #pragma comment (lib, "d3d11.lib") 
 #pragma comment (lib, "D3DCompiler.lib") 
 
+#include <vector>
+using std::vector;
+
 template<class D3D11Type>
 void ReleaseAndNullify(D3D11Type* var)
 {

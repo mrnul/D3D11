@@ -1,10 +1,7 @@
 #pragma once
 
-#include "D3D11Common.h"
-#include "D3D11VertexBuffer.h"
 #include "D3D11Shaders.h"
-#include "D3D11IndexBuffer.h"
-#include "D3D11ConstantBuffer.h"
+#include "D3D11Buffer.h"
 #include <DirectXMath.h>
 #pragma comment(lib, "DXGI.lib")
 
@@ -130,34 +127,37 @@ public:
 		return true;
 	}
 
-	const D3D11VertexBuffer CreateVertexBuffer(
-		const UINT bufferSizeBytes,
+	template <typename ElementType>
+	const D3D11Buffer<ElementType> CreateVertexBuffer(
+		const UINT elementCount,
 		const D3D11_USAGE usage = D3D11_USAGE::D3D11_USAGE_DYNAMIC,
 		const UINT accessFlagsCPU = D3D11_CPU_ACCESS_FLAG::D3D11_CPU_ACCESS_WRITE)
 	{
 		ID3D11Buffer* vertexBuffer = NULL;
-		D3D11_BUFFER_DESC descriptor{ bufferSizeBytes, usage, D3D11_BIND_FLAG::D3D11_BIND_VERTEX_BUFFER, accessFlagsCPU, 0, 0 };
+		D3D11_BUFFER_DESC descriptor{ elementCount * sizeof(ElementType), usage, D3D11_BIND_FLAG::D3D11_BIND_VERTEX_BUFFER, accessFlagsCPU, 0, 0 };
 		Device->CreateBuffer(&descriptor, NULL, &vertexBuffer);
-		return D3D11VertexBuffer(vertexBuffer, DeviceContext);
+		return D3D11Buffer<ElementType>(vertexBuffer, DeviceContext);
 	}
 
-	const D3D11IndexBuffer CreateIndexBuffer(
-		const UINT bufferSizeBytes,
+	template <typename ElementType>
+	const D3D11Buffer<ElementType> CreateIndexBuffer(
+		const UINT elementCount,
 		const D3D11_USAGE usage = D3D11_USAGE::D3D11_USAGE_DYNAMIC,
 		const UINT accessFlagsCPU = D3D11_CPU_ACCESS_FLAG::D3D11_CPU_ACCESS_WRITE)
 	{
 		ID3D11Buffer* indexBuffer = NULL;
-		D3D11_BUFFER_DESC descriptor{ bufferSizeBytes, usage, D3D11_BIND_FLAG::D3D11_BIND_INDEX_BUFFER, accessFlagsCPU, 0, 0 };
+		D3D11_BUFFER_DESC descriptor{ elementCount * sizeof(ElementType), usage, D3D11_BIND_FLAG::D3D11_BIND_INDEX_BUFFER, accessFlagsCPU, 0, 0 };
 		Device->CreateBuffer(&descriptor, NULL, &indexBuffer);
-		return D3D11IndexBuffer(indexBuffer, DeviceContext);
+		return D3D11Buffer<ElementType>(indexBuffer, DeviceContext);
 	}
 
-	const D3D11ConstantBuffer CreateConstantBuffer(const UINT bufferSizeBytes)
+	template<typename ElementType>
+	const D3D11Buffer<ElementType> CreateConstantBuffer(const UINT elementCount)
 	{
 		ID3D11Buffer* constantBuffer = NULL;
-		D3D11_BUFFER_DESC descriptor{ bufferSizeBytes, D3D11_USAGE::D3D11_USAGE_DYNAMIC, D3D11_BIND_FLAG::D3D11_BIND_CONSTANT_BUFFER, D3D11_CPU_ACCESS_FLAG::D3D11_CPU_ACCESS_WRITE, 0, 0 };
+		D3D11_BUFFER_DESC descriptor{ elementCount * sizeof(ElementType), D3D11_USAGE::D3D11_USAGE_DYNAMIC, D3D11_BIND_FLAG::D3D11_BIND_CONSTANT_BUFFER, D3D11_CPU_ACCESS_FLAG::D3D11_CPU_ACCESS_WRITE, 0, 0};
 		Device->CreateBuffer(&descriptor, NULL, &constantBuffer);
-		return D3D11ConstantBuffer(constantBuffer, DeviceContext);
+		return D3D11Buffer<ElementType>(constantBuffer, DeviceContext);
 	}
 
 	const D3D11Shaders CreateShaders(LPCWSTR fileVShader, LPCWSTR filePShader, LPCSTR entryVpoint, LPCSTR entryPpoint, vector<D3D11_INPUT_ELEMENT_DESC> descriptors =
@@ -224,7 +224,8 @@ public:
 		return true;
 	}
 
-	bool SetVertexBuffer(const D3D11VertexBuffer& buffer)
+	template<typename ElementType>
+	bool SetVertexBuffer(const D3D11Buffer<ElementType>& buffer)
 	{
 		if (!buffer.Valid())
 			return false;
@@ -235,7 +236,8 @@ public:
 		return true;
 	}
 
-	bool SetIndexBuffer(const D3D11IndexBuffer& buffer)
+	template<typename ElementType>
+	bool SetIndexBuffer(const D3D11Buffer<ElementType>& buffer)
 	{
 		if (!buffer.Valid())
 			return false;
@@ -243,7 +245,8 @@ public:
 		return true;
 	}
 
-	bool SetVSConstantBuffer(const D3D11ConstantBuffer& buffer)
+	template<typename ElementType>
+	bool SetVSConstantBuffer(const D3D11Buffer<ElementType>& buffer)
 	{
 		if (!buffer.Valid())
 			return false;
@@ -251,7 +254,8 @@ public:
 		return true;
 	}
 
-	bool SetPSConstantBuffer(const D3D11ConstantBuffer& buffer)
+	template<typename ElementType>
+	bool SetPSConstantBuffer(const D3D11Buffer<ElementType>& buffer)
 	{
 		if (!buffer.Valid())
 			return false;
