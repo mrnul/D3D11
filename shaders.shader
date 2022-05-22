@@ -1,3 +1,8 @@
+cbuffer ConstantBuffer
+{
+    float4 data;
+}
+
 struct VOut
 {
     float4 position : SV_POSITION;
@@ -9,8 +14,8 @@ VOut VShader(float4 position : POSITION, float4 color : COLOR)
     VOut output;
 
 	output.position = position;
-    output.position.x = position.x * abs(sin(color.a / 1000));
-	output.position.y = position.y * abs(sin(color.a / 2000));
+    output.position.x = position.x * abs(sin(data.x / 1000));
+	output.position.y = position.y * abs(sin(data.y / 2000));
     output.color = color;
 
     return output;
@@ -19,5 +24,5 @@ VOut VShader(float4 position : POSITION, float4 color : COLOR)
 
 float4 PShader(float4 position : SV_POSITION, float4 color : COLOR) : SV_TARGET
 {
-    return color;// * abs(sin(color.a / 1000));
+    return color * abs(cos(data.a / 1000));
 }

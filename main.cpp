@@ -29,10 +29,23 @@ int main()
 
 	D3D11VertexBuffer vBuffer = test.CreateVertexBuffer(1024); // 1024 is big enough for now
 	D3D11IndexBuffer iBuffer = test.CreateIndexBuffer(1024); // 1024 is big enough for now
+	D3D11ConstantBuffer cBuffer = test.CreateConstantBuffer(sizeof(ConstantBufferData));
 
+	cBuffer.SetData({ {1.0f, 1.0f, 1.0f, 1.0f} });
 	iBuffer.SetData({ 0, 1, 2, 3, 4, 5 });
+	vBuffer.SetData({
+		{{ -0.25f, 0.1f, 0.2f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
+		{{ 1.0f, 0.0f, 0.2f}, {0.0f, 1.0f, 0.0f, 1.0f}},
+		{{ -0.25f, -0.1f, 0.2f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
+		{{ -0.5f, 1.0f, 0.5f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
+		{{ 1.0f, 0.0f, 0.5f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
+		{{ -0.5f, -1.0f, 0.5f }, { 0.0f, 0.0f, 1.0f, 1.0f }}
+		});
+
 	test.SetVertexBuffer(vBuffer);
 	test.SetIndexBuffer(iBuffer);
+	test.SetVSConstantBuffer(cBuffer);
+	test.SetPSConstantBuffer(cBuffer);
 	while (win)
 	{
 		if (win.MessageAvailable())
@@ -42,19 +55,12 @@ int main()
 		}
 
 		const float time = (float)GetTickCount64();
-		vBuffer.SetData({
-			{{ -0.25f, 0.1f, 0.2f }, { 1.0f, 0.0f, 0.0f, time }},
-			{{ 1.0f, 0.0f, 0.2f}, {0.0f, 1.0f, 0.0f, time}},
-			{{ -0.25f, -0.1f, 0.2f }, { 0.0f, 0.0f, 1.0f, time }},
-			{{ -0.5f, 1.0f, 0.5f }, { 1.0f, 0.0f, 0.0f, time }},
-			{{ 1.0f, 0.0f, 0.5f }, { 0.0f, 1.0f, 0.0f, time }},
-			{{ -0.5f, -1.0f, 0.5f }, { 0.0f, 0.0f, 1.0f, time }}
-			});
+		cBuffer.SetData({ {time, time, time, time} });
 
 		ColorRGBA color = { abs(sin(time / 1000.f)), abs(sin(time / 2000.f)), abs(sin(time / 500.f)) };
 		test.BeginDraw(color);
 		test.IDraw(iBuffer.GetElementCount());
 		test.EndDraw();
-		// Sleep(1);
+		Sleep(10);
 	}
 }

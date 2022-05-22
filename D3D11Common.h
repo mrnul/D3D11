@@ -49,3 +49,8 @@ struct VertexPC
 	PositionXYZ XYZ;
 	ColorRGBA RGBA;
 };
+
+struct ConstantBufferData
+{
+	float cArray[4];
+};

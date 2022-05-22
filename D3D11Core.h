@@ -4,6 +4,9 @@
 #include "D3D11VertexBuffer.h"
 #include "D3D11Shaders.h"
 #include "D3D11IndexBuffer.h"
+#include "D3D11ConstantBuffer.h"
+#include <DirectXMath.h>
+#pragma comment(lib, "DXGI.lib")
 
 class D3D11Core
 {
@@ -13,6 +16,38 @@ private:
 	ID3D11Device* Device = NULL;
 	ID3D11DeviceContext* DeviceContext = NULL;
 	ID3D11DepthStencilView* DepthStencilView = NULL;
+
+	bool CreateDeviceAndSwapChain(HWND window, const unsigned int width, const unsigned int height)
+	{
+		DXGI_SWAP_CHAIN_DESC scd{};
+		scd.BufferCount = 1;
+		scd.SwapEffect = DXGI_SWAP_EFFECT::DXGI_SWAP_EFFECT_DISCARD;
+		scd.BufferDesc.Format = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
+		scd.BufferDesc.Width = width;
+		scd.BufferDesc.Height = height;
+		scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+		scd.OutputWindow = window;
+		scd.SampleDesc.Count = 1;
+		scd.Windowed = TRUE;
+		scd.Flags = DXGI_SWAP_CHAIN_FLAG::DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+
+		HRESULT res = D3D11CreateDeviceAndSwapChain
+		(
+			NULL,
+			D3D_DRIVER_TYPE::D3D_DRIVER_TYPE_HARDWARE,
+			NULL,
+			D3D11_CREATE_DEVICE_FLAG::D3D11_CREATE_DEVICE_VIDEO_SUPPORT,
+			NULL,
+			NULL,
+			D3D11_SDK_VERSION,
+			&scd,
+			&SwapChain,
+			&Device,
+			NULL,
+			&DeviceContext
+		);
+		return SUCCEEDED(res);
+	}
 
 	bool CreateRenderTargetView()
 	{
@@ -75,41 +110,14 @@ public:
 	D3D11Core() {}
 	bool Initialize(HWND window, const unsigned width, const unsigned height)
 	{
-		DXGI_SWAP_CHAIN_DESC scd{};
-		scd.BufferCount = 1;
-		scd.SwapEffect = DXGI_SWAP_EFFECT::DXGI_SWAP_EFFECT_DISCARD;
-		scd.BufferDesc.Format = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
-		scd.BufferDesc.Width = width;
-		scd.BufferDesc.Height = height;
-		scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		scd.OutputWindow = window;
-		scd.SampleDesc.Count = 1;
-		scd.Windowed = TRUE;
-		scd.Flags = DXGI_SWAP_CHAIN_FLAG::DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-
-		HRESULT res = D3D11CreateDeviceAndSwapChain
-		(
-			NULL,
-			D3D_DRIVER_TYPE::D3D_DRIVER_TYPE_HARDWARE,
-			NULL,
-			D3D11_CREATE_DEVICE_FLAG::D3D11_CREATE_DEVICE_VIDEO_SUPPORT,
-			NULL,
-			NULL,
-			D3D11_SDK_VERSION,
-			&scd,
-			&SwapChain,
-			&Device,
-			NULL,
-			&DeviceContext
-		);
-
-		if (FAILED(res))
+		if (!CreateDeviceAndSwapChain(window, width, height))
 			return false;
 
 		if (!CreateRenderTargetView())
 			return false;
 
-		CreateDepthStencil(width, height, scd.SampleDesc.Count);
+		if (!CreateDepthStencil(width, height, 1))
+			return false;
 
 		DeviceContext->OMSetRenderTargets(1, &RenderTargetView, DepthStencilView);
 
@@ -142,6 +150,14 @@ public:
 		D3D11_BUFFER_DESC descriptor{ bufferSizeBytes, usage, D3D11_BIND_FLAG::D3D11_BIND_INDEX_BUFFER, accessFlagsCPU, 0, 0 };
 		Device->CreateBuffer(&descriptor, NULL, &indexBuffer);
 		return D3D11IndexBuffer(indexBuffer, DeviceContext);
+	}
+
+	const D3D11ConstantBuffer CreateConstantBuffer(const UINT bufferSizeBytes)
+	{
+		ID3D11Buffer* constantBuffer = NULL;
+		D3D11_BUFFER_DESC descriptor{ bufferSizeBytes, D3D11_USAGE::D3D11_USAGE_DYNAMIC, D3D11_BIND_FLAG::D3D11_BIND_CONSTANT_BUFFER, D3D11_CPU_ACCESS_FLAG::D3D11_CPU_ACCESS_WRITE, 0, 0 };
+		Device->CreateBuffer(&descriptor, NULL, &constantBuffer);
+		return D3D11ConstantBuffer(constantBuffer, DeviceContext);
 	}
 
 	const D3D11Shaders CreateShaders(LPCWSTR fileVShader, LPCWSTR filePShader, LPCSTR entryVpoint, LPCSTR entryPpoint, vector<D3D11_INPUT_ELEMENT_DESC> descriptors =
@@ -224,6 +240,22 @@ public:
 		if (!buffer.Valid())
 			return false;
 		DeviceContext->IASetIndexBuffer(buffer.GetBuffer(), DXGI_FORMAT::DXGI_FORMAT_R32_UINT, 0);
+		return true;
+	}
+
+	bool SetVSConstantBuffer(const D3D11ConstantBuffer& buffer)
+	{
+		if (!buffer.Valid())
+			return false;
+		DeviceContext->VSSetConstantBuffers(0, 1, buffer.GetBufferPointer());
+		return true;
+	}
+
+	bool SetPSConstantBuffer(const D3D11ConstantBuffer& buffer)
+	{
+		if (!buffer.Valid())
+			return false;
+		DeviceContext->PSSetConstantBuffers(0, 1, buffer.GetBufferPointer());
 		return true;
 	}
 
